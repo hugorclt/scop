@@ -78,7 +78,8 @@ fn main()
             }
         })
         .expect("Expected to find the best physical device on your computer");
-    
+        
+        println!("{}", physical_device.properties().device_name);
         let (device, mut queues) = Device::new(
             physical_device,
             DeviceCreateInfo { 
@@ -92,4 +93,219 @@ fn main()
         ).expect("Expected to create a device (software) from the physical device we found");
 
         let queue = queues.next().unwrap();
+
+
+        let (mut swapchain, images) = {
+            let caps = device
+                .physical_device()
+                .surface_capabilities(&surface, Default::default())
+                .unwrap();
+            
+            let usage = caps.supported_usage_flags;
+            let alpha = caps.supported_composite_alpha.iter().next().unwrap();
+
+            let image_format = Some(
+                device
+                    .physical_device()
+                    .surface_formats(&surface, Default::default())
+                    .unwrap()[0]
+                    .0,
+                );
+
+            let window = surface.object().unwrap().downcast_ref::<Window>().unwrap();
+            let image_extent: [u32; 2] = window.inner_size().into();
+
+            Swapchain::new(
+                device.clone(),
+                surface.clone(),
+                SwapchainCreateInfo {
+                    min_image_count: caps.min_image_count,
+                    image_format,
+                    image_extent,
+                    image_usage: usage,
+                    composite_alpha: alpha,
+                    ..Default::default()
+                },
+            ).unwrap()
+        };
+
+        let command_buffer_allocator = StandardCommandBufferAllocator::new(device.clone(), Default::default());
+
+        let render_pass = vulkano::single_pass_renderpass!(
+            device.clone(),
+            attachments: {
+                color: {
+                    load: Clear,
+                    store: Store,
+                    format: swapchain.image_format(),
+                    samples: 1,
+                }
+            },
+            pass: {
+                color: [color],
+                depth_stencil: {}
+            }
+        )
+        .unwrap();
+
+        let mut viewport = Viewport {
+            origin: [0.0, 0.0],
+            dimensions: [0.0, 0.0],
+            depth_range: 0.0..1.0,
+        };
+
+        let mut framebuffers = window_size_dependent_setup(&images, render_pass.clone(), &mut viewport);
+
+        fn window_size_dependent_setup(
+            images: &[Arc<SwapchainImage>],
+            render_pass: Arc<RenderPass>,
+            viewport: &mut Viewport,
+        ) -> Vec<Arc<Framebuffer>> {
+            let dimensions = images[0].dimensions().width_height();
+            viewport.dimensions = [dimensions[0] as f32, dimensions[1] as f32];
+
+            images
+                .iter()
+                .map(|image| {
+                    let view = ImageView::new_default(image.clone()).unwrap();
+                    Framebuffer::new(
+                        render_pass.clone(),
+                        FramebufferCreateInfo {
+                            attachments: vec![view],
+                            ..Default::default()
+                        },
+                    )
+                    .unwrap()
+                })
+                .collect::<Vec<_>>()
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /*                             end_initialization                             */
+        /* -------------------------------------------------------------------------- */
+
+        let mut recreate_swapchain = false;
+        let mut previous_frame_end = Some(Box::new(sync::now(device.clone())) as Box<dyn GpuFuture>);
+
+        event_loop.run(move | event, _, control_flow| {
+            match event {
+                Event::WindowEvent {
+                    event: WindowEvent::CloseRequested,
+                    ..
+                } => {
+                    *control_flow = ControlFlow::Exit;
+                }
+                Event::WindowEvent {
+                    event: WindowEvent::Resized(_),
+                    ..
+                } => {
+                    recreate_swapchain = true;
+                }
+                Event::RedrawEventsCleared => {
+                    previous_frame_end
+                        .as_mut()
+                        .take()
+                        .unwrap()
+                        .cleanup_finished();
+
+                    if recreate_swapchain {
+                        let window = surface.object().unwrap().downcast_ref::<Window>().unwrap();
+                        let image_extent: [u32; 2] = window.inner_size().into();
+
+                        let (new_swapchain, new_images) = match swapchain.recreate(SwapchainCreateInfo {
+                            image_extent,
+                            ..swapchain.create_info()
+                        }) {
+                            Ok(r) => r,
+                            Err(SwapchainCreationError::ImageExtentNotSupported { .. }) => return,
+                            Err(e) => panic!("Failed to recreate swapchain: {:?}", e),
+                        };
+
+                        swapchain = new_swapchain;
+                        framebuffers = window_size_dependent_setup(&new_images, render_pass.clone(), &mut viewport);
+                        recreate_swapchain = false;
+                    }
+
+                    let (image_index, suboptimal, acquire_future) =
+                        match swapchain::acquire_next_image(swapchain.clone(), None) {
+                            Ok(r) => r,
+                            Err(AcquireError::OutOfDate) => {
+                                recreate_swapchain = true;
+                                return;
+                            }
+                            Err(e) => panic!("Failed to acquire next image: {:?}", e),
+                        };
+
+                    let clear_values = vec![Some([0.0, 0.0, 0.0, 1.0].into())];
+
+                    let mut cmd_buffer_builder = AutoCommandBufferBuilder::primary(
+                        &command_buffer_allocator,
+                        queue.queue_family_index(),
+                        CommandBufferUsage::OneTimeSubmit,
+                    )
+                    .unwrap();
+
+                    cmd_buffer_builder
+                    .begin_render_pass(
+                        RenderPassBeginInfo {
+                            clear_values,
+                            ..RenderPassBeginInfo::framebuffer(
+                                framebuffers[image_index as usize].clone(),
+                            )
+                        },
+                        SubpassContents::Inline,
+                    )
+                    .unwrap()
+                    .end_render_pass()
+                    .unwrap();
+
+                    let command_buffer = cmd_buffer_builder.build().unwrap();
+
+                    let future = previous_frame_end
+                        .take()
+                        .unwrap()
+                        .join(acquire_future)
+                        .then_execute(queue.clone(), command_buffer)
+                        .unwrap()
+                        .then_swapchain_present(
+                            queue.clone(),
+                            SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), image_index),
+                        )
+                        .then_signal_fence_and_flush();
+
+                    match future {
+                        Ok(future) => {
+                            previous_frame_end = Some(Box::new(future) as Box<_>);
+                        }
+                        Err(FlushError::OutOfDate) => {
+                            recreate_swapchain = true;
+                            previous_frame_end = Some(Box::new(sync::now(device.clone())) as Box<_>);
+                        }
+                        Err(e) => {
+                            println!("Failed to flush future: {:?}", e);
+                            previous_frame_end = Some(Box::new(sync::now(device.clone())) as Box<_>);
+                        }
+                    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                },
+                _ => {}
+            }
+        });
 }
