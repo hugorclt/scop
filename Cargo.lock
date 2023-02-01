@@ -902,6 +902,7 @@ dependencies = [
 name = "scop"
 version = "0.1.0"
 dependencies = [
+ "bytemuck",
  "vulkano",
  "vulkano-shaders",
  "vulkano-win",
