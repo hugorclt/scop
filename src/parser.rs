@@ -1,51 +1,31 @@
-pub struct Material {
-    name: String,
-    ambiant_reflectivity: [f32; 3],
-    diffuse_reflectivity: [f32; 3],
-    specular_reflectivity: [f32; 3],
-    illumination: i32,
-    factor: f32,
-    specular_exponent: f32,
-    optical_density: f32,
-}
+use crate::Material;
+use crate::parser_mtl::{parse_material, find_material};
 
-impl Material{
-    pub fn default() -> Self {
-        Material {
-            name: "".to_string(),
-            ambiant_reflectivity: [-1.0, -1.0, -1.0],
-            diffuse_reflectivity: [-1.0, -1.0, -1.0],
-            specular_reflectivity: [-1.0, -1.0, -1.0],
-            illumination: -1,
-            factor: -1.0,
-            specular_exponent: -1.0,
-            optical_density: -1.0,
-        }
-    }
-}
-
+#[derive(Debug)]
 pub struct Index {
     vertices: i32,
     textures: i32,
     normals: i32,
 }
 
+#[derive(Debug)]
 pub struct Data {
     name: String,
     vertices: Vec<[f32; 3]>,
     textures_coord: Vec<[f32; 2]>,
     normals: Vec<[f32; 3]>,
-    links: (Vec<Vec<Index>>, Material)
+    links: Vec<(Vec<Index>, Material)>
 }
 
 impl Data {
+
     pub fn default() -> Self{
         Data {
             name: "".to_string(),
             vertices: Vec::new(),
             textures_coord: Vec::new(),
             normals: Vec::new(),
-            links: (Vec::new(), Material::default()),
+            links: Vec::new(),
         }
     }
    
@@ -97,7 +77,7 @@ impl Data {
         ]);
     }
 
-    fn parse_links(&mut self, line: &str, material: Material) {
+    fn parse_links(&mut self, line: &str, material: Option<&Material>) {
         let line_links : Vec<&str> = line.split_whitespace().collect();
 
         if line_links.len() <= 2 {
@@ -105,8 +85,9 @@ impl Data {
         }
 
         let mut index_vec: Vec<Index> = Vec::new();
-        for elem in line_links {
+        for elem in &line_links[1..] {
             let nb_slash = elem.matches('/').count();
+            
             if nb_slash == 0 {
                 index_vec.push(Index{
                     vertices: elem.parse().expect("Error in .obj file"),
@@ -124,10 +105,11 @@ impl Data {
             }
             else if nb_slash == 2 && elem.contains("//") {
                 let vert_normals: Vec<&str> = elem.split("/").collect();
+
                 index_vec.push(Index{
                     vertices: vert_normals[0].parse().expect("Error in .obj file"),
                     textures: -1,
-                    normals: vert_normals[1].parse().expect("Error in .obj file"),
+                    normals: vert_normals[2].parse().expect("Error in .obj file"),
                 })
             }
             else if nb_slash == 2 {
@@ -139,23 +121,22 @@ impl Data {
                 })
             }
         }
-        self.links.0.push(index_vec);
-        self.links.1 = material;
+
+        self.links.push((index_vec, material.unwrap_or(&Material::default()).clone()));
     }
 
-    pub fn line_type_choice(&mut self, line: &String) {
-        let current_material = Material::default();
-        
+    pub fn line_type_choice(&mut self, line: &String, obj_path: &str, current_material: &mut Vec<Material>, material_list: &mut Vec<Material>) {
         match line.as_str() {
+            line if line.len() == 0 => {},
+            line if line.starts_with("vt") => self.parse_textures(&line.to_string()),
+            line if line.starts_with("vn") => self.parse_normals(&line.to_string()),
+            line if line.starts_with("mtllib")  => { parse_material(&line, material_list, &obj_path) },
+            line if line.starts_with("usemtl")  => { find_material(line.to_string(), &material_list, current_material) },
+            line if line.starts_with('s')  => {println!("s")},
             line if line.starts_with('#') => {},
             line if line.starts_with('o') => self.parse_name(&line.to_string()),
             line if line.starts_with('v') => self.parse_vertex(&line.to_string()),
-            line if line.starts_with('f') => self.parse_links(&line.to_string(), current_material),
-            line if line.starts_with("vt") => self.parse_textures(&line.to_string()),
-            line if line.starts_with("vn") => self.parse_normals(&line.to_string()),
-            line if line.starts_with("mtllib")  => {println!("mttlib")},
-            line if line.starts_with("usemtl")  => {println!("usemtl")},
-            line if line.starts_with('s')  => {println!("s")},
+            line if line.starts_with('f') => self.parse_links(&line.to_string(), current_material.last()),
             _ => panic!("Error in the .obj file at line '{line}'"),
         };
     }

@@ -22,8 +22,10 @@ fn get_extensions_from_filename(path: &str) -> Option<&str> {
         .and_then(OsStr::to_str)
 }
 
-pub fn check_obj_extensions(path: &str) -> bool {
+pub fn check_obj_extensions(path: &str, ext: &str) {
     let extensions: Option<&str> = get_extensions_from_filename(path);
     
-    extensions.is_some() && extensions.unwrap() == "obj"
+    if (extensions.is_some() && extensions.unwrap() == ext) == false {
+        panic!("Error on line {path} file extensions have to be : {ext}");
+    }
 }
