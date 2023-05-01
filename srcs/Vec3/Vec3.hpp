@@ -11,6 +11,7 @@ class Vec3 {
 
     Vec3();
     Vec3(double x, double y, double z);
+    Vec3(double x, double y);
     Vec3(double x, double y, double z, double w);
     Vec3(const double &oth);
 

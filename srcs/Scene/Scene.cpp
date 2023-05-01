@@ -16,8 +16,8 @@ void	Scene::addNormal(Vec3 *normal) {
 	_normals.push_back(normal);
 }
 
-void	Scene::addMaterial(Material *material) {
-	_materials.push_back(material);
+void	Scene::addMaterial(std::string name, Material *material) {
+	_materials.insert({name , material});
 }
 
 void	Scene::addFace(Face *face) {

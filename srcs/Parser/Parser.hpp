@@ -11,9 +11,14 @@
 class Parser {
 	private:
 		using ParseFunc = void (Parser::*)(std::string, Scene&);
-		std::ifstream	_file;
-
+		using MaterialParseFunc = void (Parser::*)(std::string, Material*);
 		
+		std::ifstream	_file;
+		std::string		_path;
+		static const std::map<std::string, ParseFunc> _lineType;
+		static const std::map<std::string, MaterialParseFunc> _materialLineType;
+
+		/* ------------------------------- parseObject ------------------------------ */
 		void 	_parseMaterial(std::string line, Scene &scene);
 		void 	_parseComment(std::string line, Scene &scene);
 		void	_parseVertex(std::string line, Scene &scene);
@@ -26,11 +31,24 @@ class Parser {
 		void	_parseFace(std::string line, Scene &scene);
 		void	_parseLine(std::string line, Scene &scene);
 
+		/* ------------------------------ parseMaterial ----------------------------- */
+		void	_parseMaterialName(std:: string line, Material *material);
+		void	_parseShiny(std:: string line, Material *material);
+		void	_parseAmbiant(std:: string line, Material *material);
+		void	_parseDiffuse(std:: string line, Material *material);
+		void	_parseSpecular(std:: string line, Material *material);
+		void	_parseRefraction(std:: string line, Material *material);
+		void	_parseTransparency(std:: string line, Material *material);
+		void	_parseIllum(std:: string line, Material *material);
+		void	_parseComment(std::string line, Material *material);
+
+
 		/* ---------------------------------- utils --------------------------------- */
 		std::string _nextLine(void);
 		std::string _getFirstWord(std::string line);
+		std::vector<std::string> _tokenize(std::string str, const char* delim);
+		Vec3	*_parseVec3(std::string line);
 
-		static const std::map<std::string, ParseFunc> _lineType;
 
 	public:
 		Parser(std::string path);

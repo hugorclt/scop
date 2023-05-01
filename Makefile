@@ -3,7 +3,7 @@
 NAME = scop
 
 CXX ?= c++
-CXXFLAGS = -std=c++2b -g3 -fsanitize=address #-Wall -Wextra -Werror 
+CXXFLAGS = -std=c++2b -g3 #-Wall -Wextra -Werror 
 
 DIR_SRC = srcs
 DIR_OBJ = .obj

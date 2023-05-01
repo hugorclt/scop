@@ -2,17 +2,24 @@
 #include "Vec3.hpp"
 
 Vec3::Vec3() {
-    _x = 0;
-    _y = 0;
-    _z = 0;
-    _w = 0;
+    _x = -2;
+    _y = -2;
+    _z = -2;
+    _w = -2;
 }
 
 Vec3::Vec3(double x, double y, double z) {
     _x = x;
     _y = y;
     _z = z;
-    _w = 0;
+    _w = -1;
+}
+
+Vec3::Vec3(double x, double y) {
+    _x = x;
+    _y = y;
+    _z = -2;
+    _w = -1;
 }
 
 Vec3::Vec3(double x, double y, double z, double w) {
