@@ -32,7 +32,8 @@ class Material {
 		void	setShininess(double shininess);
 		void 	setTransparency(double transparency);
 		std::string	getName(void);
-
+		
+		bool		isFileEmpty(void);
 		std::string	nextLine(void);
 		void		setPath(std::string path);
 		void		print();

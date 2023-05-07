@@ -93,4 +93,8 @@ void 	Material::setTransparency(double transparency) {
 std::string	Material::getName(void) {
 	return _name;
 }
-	
+
+bool	Material::isFileEmpty(void) {
+	if (!_file.eof()) return true;
+	else return false;
+}

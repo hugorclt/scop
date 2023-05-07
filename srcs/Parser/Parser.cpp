@@ -93,7 +93,8 @@ Vec3	*Parser::_parseVec3(std::string line) {
 void	Parser::parseObj(Scene &scene) {
 	std::string	line = _nextLine();
 
-	while (!line.empty()) {
+	while (!_file.eof()) {
+		std::cout << line << std::endl;
 		_parseLine(line, scene);
 		line = _nextLine();
 	}
@@ -142,16 +143,14 @@ void	Parser::_parseMaterial(std::string line, Scene &scene) {
 
 	Material *material = new Material(_path + path);
 	std::string lineMaterial = material->nextLine();
-	while (!lineMaterial.empty()) {
+	while (material->isFileEmpty()) {
 		for (auto it = _materialLineType.begin(); it != _materialLineType.end(); it++) {
 			if (lineMaterial.starts_with(it->first)) {
 				(this->*(_materialLineType.find(it->first)->second))(lineMaterial, material);
 			}
 		}
 		lineMaterial = material->nextLine();
-		std::cout << lineMaterial << std::endl;
 	}
-	material->print();
 	scene.addMaterial(material->getName(), material);
 }
 
