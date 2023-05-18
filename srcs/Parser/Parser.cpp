@@ -94,7 +94,6 @@ void	Parser::parseObj(Scene &scene) {
 	std::string	line = _nextLine();
 
 	while (!_file.eof()) {
-		std::cout << line << std::endl;
 		_parseLine(line, scene);
 		line = _nextLine();
 	}

@@ -2,8 +2,10 @@
 
 NAME = scop
 
-CXX ?= c++
-CXXFLAGS = -std=c++2b -g3 #-Wall -Wextra -Werror 
+CXX ?= g++
+CXXFLAGS = -std=c++2b -g3 -o2 #-Wall -Wextra -Werror 
+
+LDFLAGS =  -lglfw -lvulkan -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi
 
 DIR_SRC = srcs
 DIR_OBJ = .obj
@@ -22,7 +24,7 @@ $(DIR_OBJ)/%.o : $(DIR_SRC)/%.cpp $(INC)
 	@$(CXX) $(CXXFLAGS) $(INCFLAGS) -o $@ -c $< 
 
 $(NAME): $(OBJ)
-	@$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
+	@$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME) $(LDFLAGS)
 	@echo "\033[1;32m\nScop: Done!\033[0m"
 
 all: $(DIR_OBJ) $(NAME)
