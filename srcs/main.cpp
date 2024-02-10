@@ -11,10 +11,11 @@ int main(int ac, char **av) {
 	Parser	parser(av[1]);
 
 	parser.parseObj(scene);
-	auto indices = scene.getIndices();
-	for (auto it = indices.begin(); it != indices.end(); it++) {
-		std::cout << *it << std::endl;
-	}
+	// auto indices = scene.getIndices();
+	// for (auto it = indices.begin(); it != indices.end(); it++) {
+	// 	std::cout << *it << std::endl;
+	// }
+	scene.printVertex();
 	 //App app;
 
 	try {
