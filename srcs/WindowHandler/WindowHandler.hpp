@@ -18,6 +18,4 @@ class WindowHandler {
         void    initWindow();
         bool    shouldClose();
 
-
-
 };
