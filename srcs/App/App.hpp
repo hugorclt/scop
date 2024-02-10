@@ -1,14 +1,13 @@
 #define GLFW_INCLUDE_VULKAN
+#include <set>
 #include <GLFW/glfw3.h>
-
-#include <iostream>
 #include <stdexcept>
 #include <cstdlib>
-#include <set>
 #include <cstdint> // Necessary for uint32_t
 #include <limits> // Necessary for std::numeric_limits
 #include <algorithm> // Necessary for std::clamp
 #include <glm/glm.hpp>
+#include <cstring>
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
