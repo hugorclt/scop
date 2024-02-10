@@ -35,7 +35,7 @@ void Scene::printVertex() {
 }
 
 void Scene::addIndices(std::string indice) {
-	this->_indices.push_back(stoi(indice));
+	this->_indices.push_back(stoi(indice) - 1);
 }
 
 std::vector<int> Scene::getIndices() {
