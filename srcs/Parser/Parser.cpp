@@ -112,12 +112,15 @@ void	Parser::_parseName(std::string line, Scene &scene) {
 }
 
 void	Parser::_parseVertex(std::string line, Scene &scene) {
+	scene.addVertex(_parseVec3(line));
 }
 
 void	Parser::_parseTexture(std::string line, Scene &scene) {
+	scene.addTexture(_parseVec3(line));
 }
 
 void	Parser::_parseNormals(std::string line, Scene &scene) {
+		scene.addNormal(_parseVec3(line));
 }
 
 void	Parser::_parseGroup(std::string line, Scene &scene) {
@@ -130,6 +133,13 @@ void	Parser::_parseShading(std::string line, Scene &scene) {
 }
 
 void	Parser::_parseFace(std::string line, Scene &scene) {
+	std::vector<std::string>	token;
+
+	token = _tokenize(line, " ");
+	for (auto it = token.begin() + 1; it != token.end(); it++) {
+		std::vector<std::string> cuttedParts = _tokenize(*it, "/");
+		scene.addIndices(cuttedParts[0]);
+	}
 }
 
 void	Parser::_parseComment(std::string line, Scene &scene) {

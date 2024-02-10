@@ -15,6 +15,9 @@ class Scene {
 		std::vector<Face*>		_faces;
 		bool					_shading;
 
+		//TEMP
+		std::vector<int>		_indices;
+
 	public:
 		void	setName(std::string name);
 		void	addVertex(Vec3 *vertex);
@@ -23,4 +26,9 @@ class Scene {
 		void	addMaterial(std::string name, Material *material);
 		void	addFace(Face *face);
 		void	shading(bool shading);
+		void	addIndices(std::string indice);
+
+		void				printVertex();
+		std::vector<int> 	getIndices();
+		std::vector<Vec3*>	getVertex();
 };

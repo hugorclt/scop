@@ -2,6 +2,8 @@
 #include "Vec3.hpp"
 #include "Material.hpp"
 
+
+//TRIANGLE
 class Face {
     private:
         Vec3        *_vertex;

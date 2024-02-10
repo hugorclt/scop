@@ -420,7 +420,7 @@ class App
 		}
 
 		SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device)
-		{
+		{ 
 			SwapChainSupportDetails details;
 
 			vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, _surface, &details.capabilities);
@@ -924,6 +924,31 @@ class App
 			memcpy(data, vertices.data(), (size_t) bufferSize);
 			vkUnmapMemory(_device, _vertexBufferMemory);
 		}
+
+		void	copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+			VkCommandBufferAllocateInfo allocInfo{};
+			allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+			allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+			allocInfo.commandPool = _commandPool;
+			allocInfo.commandBufferCount = 1;
+
+			VkCommandBuffer commandBuffer {};
+			vkAllocateCommandBuffers(_device, &allocInfo, &commandBuffer);
+
+			VkCommandBufferBeginInfo beginInfo{};
+			beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+			vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+			VkBufferCopy copyRegion{};
+			copyRegion.srcOffset = 0;
+			copyRegion.dstOffset = 0;
+			copyRegion.size = size;
+			vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+			vkEndCommandBuffer(commandBuffer);
+		}	
+
 
 		void initVulkan()
 		{

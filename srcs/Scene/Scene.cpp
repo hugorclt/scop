@@ -27,3 +27,21 @@ void	Scene::addFace(Face *face) {
 void	Scene::shading(bool shading) {
 	_shading = shading;
 }
+
+void Scene::printVertex() {
+	for (auto it = _vertex.begin(); it != _vertex.end(); it++) {
+		(*it)->print();
+	}
+}
+
+void Scene::addIndices(std::string indice) {
+	this->_indices.push_back(stoi(indice));
+}
+
+std::vector<int> Scene::getIndices() {
+	return _indices;
+}
+
+std::vector<Vec3*>	Scene::getVertex() {
+	return _vertex;
+}
